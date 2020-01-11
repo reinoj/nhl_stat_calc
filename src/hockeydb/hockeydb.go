@@ -2,8 +2,11 @@ package hockeydb
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 )
 
 // CreateDb creates the hockey database
@@ -28,7 +31,21 @@ func CreateTables(hdb *sql.DB) {
 
 // MOVE THESE STRUCTS TO A DIFFERENT FILE
 
-//
-func getTeams(hdb *sql.DB) {
+// GetTeams words words words
+func GetTeams(hdb *sql.DB) {
+	url := "https://statsapi.web.nhl.com/api/v1/teams"
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	teamData, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	var allTeams nhlTeams
+	json.Unmarshal(teamData, &allTeams)
+
+	fmt.Printf("\n\nname: %s\nabbrev: %s\ncity: %s\n\n", allTeams.Teams[0].Name, allTeams.Teams[0].Abbreviation, allTeams.Teams[0].Venue.City)
 }

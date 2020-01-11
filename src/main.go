@@ -40,5 +40,7 @@ func main() {
 		fmt.Println("Tables Created.")
 	}
 
+	hockeydb.GetTeams(hdb)
+
 	fmt.Println("Complete.")
 }
