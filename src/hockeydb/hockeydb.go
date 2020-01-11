@@ -8,6 +8,7 @@ import (
 
 // CreateDb creates the hockey database
 func CreateDb(hdb *sql.DB) {
+	// executes the create statement
 	_, err := hdb.Exec("CREATE DATABASE hockey")
 	if err != nil {
 		log.Fatal(err)
@@ -17,9 +18,17 @@ func CreateDb(hdb *sql.DB) {
 
 // CreateTables creates the tables inside the database
 func CreateTables(hdb *sql.DB) {
+	// executes the create statement
 	_, err := hdb.Exec("CREATE TABLE teams")
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("teams table created.")
+}
+
+// MOVE THESE STRUCTS TO A DIFFERENT FILE
+
+//
+func getTeams(hdb *sql.DB) {
+
 }

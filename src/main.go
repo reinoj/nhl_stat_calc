@@ -12,13 +12,15 @@ import (
 )
 
 func main() {
+	fmt.Println("Starting...")
+
 	fmt.Println("Opening Database...")
 	hdb, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer hdb.Close()
-	fmt.Println("Database Opened...")
+	fmt.Println("Database Opened.")
 
 	// boolean flag for whether to create the database and tables
 	var setupFlag bool
