@@ -44,8 +44,15 @@ func GetTeams(hdb *sql.DB) {
 		log.Fatal(err)
 	}
 
-	var allTeams nhlTeams
-	json.Unmarshal(teamData, &allTeams)
+	var allTeamInfo nhlTeams
+	json.Unmarshal(teamData, &allTeamInfo)
 
-	fmt.Printf("\n\nname: %s\nabbrev: %s\ncity: %s\n\n", allTeams.Teams[0].Name, allTeams.Teams[0].Abbreviation, allTeams.Teams[0].Venue.City)
+	var teams [NumTeams]teamInfo
+	for i := uint8(0); i < NumTeams; i++ {
+		teams[i] = teamInfo{allTeamInfo.Teams[i].ID, allTeamInfo.Teams[i].TeamName, allTeamInfo.Teams[i].LocationName, allTeamInfo.Teams[i].Abbreviation, allTeamInfo.Teams[i].Division.Name, allTeamInfo.Teams[i].Conference.Name}
+	}
+
+	for i := uint8(0); i < NumTeams; i++ {
+		fmt.Printf("name: %s\n", teams[i].teamName)
+	}
 }

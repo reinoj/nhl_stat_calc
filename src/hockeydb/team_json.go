@@ -1,5 +1,8 @@
 package hockeydb
 
+// NumTeams is the number of teams, Seattle not in league yet
+const NumTeams uint8 = 31
+
 type timezone struct {
 	ID     string `json:"id"`
 	Offset int8   `json:"offset"`
@@ -34,24 +37,33 @@ type franchise struct {
 }
 
 type team struct {
-	ID               int8       `json:"id"`
-	Name             string     `json:"name"`
-	Link             string     `json:"link"`
-	Venue            venue      `json:"venue"`
-	Abbreviation     string     `json:"abbreviation"`
-	TeamName         string     `json:"teamName"`
-	LocationName     string     `json:"locationName"`
-	FirstYearOfPlay  string     `json:"firstYearOfPlay"`
-	Division         division   `json:"division"`
-	Conference       conference `json:"conference"`
-	Franchise        franchise  `json:"franchise"`
-	ShortName        string     `json:"shortName"`
-	OfficialySiteURL string     `json:"officialSiteUrl"`
-	FranchiseID      int8       `json:"franchiseId"`
-	Active           bool       `json:"active"`
+	ID              int8       `json:"id"`
+	Name            string     `json:"name"`
+	Link            string     `json:"link"`
+	Venue           venue      `json:"venue"`
+	Abbreviation    string     `json:"abbreviation"`
+	TeamName        string     `json:"teamName"`
+	LocationName    string     `json:"locationName"`
+	FirstYearOfPlay string     `json:"firstYearOfPlay"`
+	Division        division   `json:"division"`
+	Conference      conference `json:"conference"`
+	Franchise       franchise  `json:"franchise"`
+	ShortName       string     `json:"shortName"`
+	OfficialSiteURL string     `json:"officialSiteUrl"`
+	FranchiseID     int8       `json:"franchiseId"`
+	Active          bool       `json:"active"`
 }
 
 type nhlTeams struct {
 	Copyright string `json:"copyright"`
 	Teams     []team `json:"teams"`
+}
+
+type teamInfo struct {
+	ID             int8
+	teamName       string
+	locationName   string
+	Abbreviation   string
+	divisionName   string
+	conferenceName string
 }
