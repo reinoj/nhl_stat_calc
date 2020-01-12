@@ -8,7 +8,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/reinoj/go_corsi_calc/src/hockeydb"
-	//"github.com/reinoj/go_corsi_calc/src/hockeydb"
 )
 
 func main() {
@@ -18,17 +17,24 @@ func main() {
 	var createDatabaseFlag bool
 	//
 	var createTablesFlag bool
-	// assigns createDatabase if it was given in the argument, otherwise it defaults to false
-	flag.BoolVar(&createDatabaseFlag, "createDatabase", false, "bool value")
-	// assigns creatTables if it was given in the argument, otherwise it defaults to false
-	flag.BoolVar(&createTablesFlag, "createTables", false, "bool value")
+	//
+	var mysqlUserFlag string
+	//
+	var mysqlPasswordFlag string
+
+	flag.BoolVar(&createDatabaseFlag, "createDatabase", false, "create the database")
+	flag.BoolVar(&createTablesFlag, "createTables", false, "create the tables")
+	flag.StringVar(&mysqlUserFlag, "mysqlUser", "root", "user name for mysql")
+	flag.StringVar(&mysqlPasswordFlag, "mysqlPassword", "root", "mysql for mysql user")
+
 	// must be called after all flags are defined and before flags are accessed by the program
 	flag.Parse()
 
+	mysqlSignIn := fmt.Sprintf("%s:%s", mysqlUserFlag, mysqlPasswordFlag)
 	// check setupFlag
 	if createDatabaseFlag {
 		fmt.Println("Opening initial database...")
-		db, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/")
+		db, err := sql.Open("mysql", mysqlSignIn+"@tcp(127.0.0.1:3306)/")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -38,7 +44,7 @@ func main() {
 		db.Close()
 	}
 	fmt.Println("Opening Hockey database...")
-	hdb, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:3306)/Hockey")
+	hdb, err := sql.Open("mysql", mysqlSignIn+"@tcp(127.0.0.1:3306)/Hockey")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -51,7 +57,7 @@ func main() {
 		// Populate the Teams table
 		hockeydb.GetTeams(hdb)
 	}
-	//hockeydb.GetTeams(hdb)
+	fmt.Println(mysqlSignIn)
 	fmt.Println("Hockey database closed.")
 	fmt.Println("Complete.")
 }
