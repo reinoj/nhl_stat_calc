@@ -26,7 +26,7 @@ type division struct {
 
 type conference struct {
 	ID   int8   `json:"id"`
-	Name string `json:"teamName"`
+	Name string `json:"name"`
 	Link string `json:"link"`
 }
 
@@ -61,9 +61,9 @@ type nhlTeams struct {
 
 type teamInfo struct {
 	ID             int8
-	teamName       string
-	locationName   string
+	TeamName       string
+	LocationName   string
 	Abbreviation   string
-	divisionName   string
-	conferenceName string
+	DivisionName   string
+	ConferenceName string
 }
