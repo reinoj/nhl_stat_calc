@@ -9,6 +9,9 @@ import (
 	"net/http"
 )
 
+// NumTeams is the number of teams, Seattle not in league yet
+const NumTeams uint8 = 31
+
 // CreateDb creates the hockey database
 func CreateDb(db *sql.DB) {
 	fmt.Println("Creating Hockey databse...")
@@ -28,8 +31,9 @@ func CreateTables(hdb *sql.DB) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	/*
-		"CREATE TABLE Teams (
+		CREATE TABLE Teams (
 			ID int NOT NULL,
 			TeamName VARCHAR(255) NOT NULL,
 			LocationName VARCHAR(255) NOT NULL,
@@ -37,12 +41,36 @@ func CreateTables(hdb *sql.DB) {
 			DivisionName VARCHAR(255) NOT NULL,
 			ConferenceName VARCHAR(255) NOT NULL,
 			PRIMARY KEY (ID)
-		)"
+		)
 	*/
-	// executes the create statement to make the table
-	_, err = hdb.Exec("CREATE TABLE Teams (ID int NOT NULL, TeamName VARCHAR(255) NOT NULL, LocationName VARCHAR(255) NOT NULL, Abbreviation VARCHAR(255) NOT NULL, DivisionName VARCHAR(255) NOT NULL, ConferenceName VARCHAR(255) NOT NULL, PRIMARY KEY (ID))")
+	// executes the create statement to make Teams table
+	_, err = hdb.Exec("CREATE TABLE Teams (ID INT NOT NULL, TeamName VARCHAR(255) NOT NULL, LocationName VARCHAR(255) NOT NULL, Abbreviation VARCHAR(255) NOT NULL, DivisionName VARCHAR(255) NOT NULL, ConferenceName VARCHAR(255) NOT NULL, PRIMARY KEY (ID))")
 	if err != nil {
-		log.Fatal(err)
+		// I've read that checking the output of the .Error() function is bad practice, but it works
+		if err.Error() != "Error 1050: Table 'Teams' already exists" {
+			log.Fatal(err)
+		} else {
+			fmt.Println("Teams table already exists.")
+		}
+		// If the error is that the table already exists, just ignore it, otherwise it will print the error to the screen
+	}
+
+	/*
+		CREATE TABLE Schedule (
+			GameKey INT NOT NULL AUTO_INCREMENT,
+			GameID CHAR(10) NOT NULL,
+			Away CHAR(3) NOT NULL,
+			Home CHAR(3) NOT NULL,
+			PRIMARY KEY (GameKey)
+		)
+	*/
+	_, err = hdb.Exec("CREATE TABLE Schedule (GameKey INT NOT NULL AUTO_INCREMENT, GameID CHAR(10) NOT NULL, Away CHAR(3) NOT NULL, Home CHAR(3) NOT NULL, PRIMARY KEY (GameKey))")
+	if err != nil {
+		if err.Error() != "Error 1050: Table 'Schedule' already exists" {
+			log.Fatal(err)
+		} else {
+			fmt.Println("Schedule table already exists.")
+		}
 	}
 	fmt.Println("Tables created.")
 }
@@ -67,7 +95,7 @@ func populateTeamsTable(hdb *sql.DB, teams [31]teamInfo) {
 		}
 	}
 
-	fmt.Println("Teams table populated.")
+	fmt.Println("Finished populating Teams table.")
 }
 
 // GetTeams retrieves the teams json from the api and stores relevant info
@@ -101,4 +129,30 @@ func GetTeams(hdb *sql.DB) {
 	}
 
 	populateTeamsTable(hdb, teams)
+}
+
+func populateScheduleTable(hdb *sql.DB, fullSchedule schedule) {
+	fmt.Println("Populating Schedule table...")
+
+	fmt.Println("Finished populating Schedule table.")
+}
+
+// GetSchedule retrieves the full schedule and puts the info in the Schedule table
+func GetSchedule(hdb *sql.DB) {
+	url := "https://statsapi.web.nhl.com/api/v1/schedule?season=20192020"
+	fmt.Println("Getting NHL schedule...")
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Retrieved schedule json.")
+	scheduleData, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var fullSchedule schedule
+	json.Unmarshal(scheduleData, &fullSchedule)
+	populateScheduleTable(hdb, fullSchedule)
 }

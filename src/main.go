@@ -7,12 +7,13 @@ import (
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/reinoj/go_corsi_calc/src/hockeydb"
+	"github.com/reinoj/corsi_calc/src/hockeydb"
 )
 
 func main() {
 	fmt.Println("Starting...")
 
+	//---------------FLAGS---------------
 	// boolean flag for whether to create the database and tables
 	var createDatabaseFlag bool
 	//
@@ -29,9 +30,12 @@ func main() {
 
 	// must be called after all flags are defined and before flags are accessed by the program
 	flag.Parse()
+	//---------------FLAGS---------------
 
+	//---------------CREATE INITIAL DATABASE---------------
+	// Assigns the user name and password to the begininnign of the string
 	mysqlSignIn := fmt.Sprintf("%s:%s", mysqlUserFlag, mysqlPasswordFlag)
-	// check setupFlag
+	// check createDatabaseFlag
 	if createDatabaseFlag {
 		fmt.Println("Opening initial database...")
 		db, err := sql.Open("mysql", mysqlSignIn+"@tcp(127.0.0.1:3306)/")
@@ -43,6 +47,9 @@ func main() {
 		hockeydb.CreateDb(db)
 		db.Close()
 	}
+	//---------------CREATE INITIAL DATABASE---------------
+
+	//---------------CREATE TABLES---------------
 	fmt.Println("Opening Hockey database...")
 	hdb, err := sql.Open("mysql", mysqlSignIn+"@tcp(127.0.0.1:3306)/Hockey")
 	if err != nil {
@@ -57,7 +64,10 @@ func main() {
 		// Populate the Teams table
 		hockeydb.GetTeams(hdb)
 	}
-	fmt.Println(mysqlSignIn)
+	//---------------CREATE TABLES---------------
+
+	hockeydb.CreateTables(hdb)
+
 	fmt.Println("Hockey database closed.")
 	fmt.Println("Complete.")
 }

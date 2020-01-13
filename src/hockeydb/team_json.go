@@ -1,8 +1,5 @@
 package hockeydb
 
-// NumTeams is the number of teams, Seattle not in league yet
-const NumTeams uint8 = 31
-
 type timezone struct {
 	ID     string `json:"id"`
 	Offset int8   `json:"offset"`

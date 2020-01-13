@@ -1,1 +1,1 @@
-# go_corsi_calc
+# corsi_calc
