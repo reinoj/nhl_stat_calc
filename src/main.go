@@ -45,6 +45,7 @@ func main() {
 		fmt.Println("Initial database Opened.")
 		// Creates the database for all the tables
 		hockeydb.CreateDb(db)
+
 		db.Close()
 	}
 	//---------------CREATE INITIAL DATABASE---------------
@@ -57,17 +58,19 @@ func main() {
 	}
 	defer hdb.Close()
 	fmt.Println("Hockey database Opened.")
+
 	// check createTablesFlag
 	if createTablesFlag {
 		// Creates the tables for the database
 		hockeydb.CreateTables(hdb)
 		// Populate the Teams table
-		hockeydb.GetTeams(hdb)
+		//hockeydb.GetTeams(hdb)
+		// Populate the Schedule table
+		hockeydb.GetSchedule(hdb)
 	}
 	//---------------CREATE TABLES---------------
 
-	hockeydb.CreateTables(hdb)
-
+	//hockeydb.GetSchedule(hdb)
 	fmt.Println("Hockey database closed.")
 	fmt.Println("Complete.")
 }

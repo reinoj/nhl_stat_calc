@@ -14,7 +14,7 @@ type venue struct {
 }
 
 type division struct {
-	ID           int8   `json:"id"`
+	ID           uint8  `json:"id"`
 	Name         string `json:"name"`
 	NameShort    string `json:"nameShort"`
 	Link         string `json:"link"`
@@ -22,19 +22,19 @@ type division struct {
 }
 
 type conference struct {
-	ID   int8   `json:"id"`
+	ID   uint8  `json:"id"`
 	Name string `json:"name"`
 	Link string `json:"link"`
 }
 
 type franchise struct {
-	FranchiseID int8   `json:"franchiseId"`
+	FranchiseID uint8  `json:"franchiseId"`
 	TeamName    string `json:"teamName"`
 	Link        string `json:"link"`
 }
 
 type team struct {
-	ID              int8       `json:"id"`
+	ID              uint8      `json:"id"`
 	Name            string     `json:"name"`
 	Link            string     `json:"link"`
 	Venue           venue      `json:"venue"`
@@ -47,20 +47,11 @@ type team struct {
 	Franchise       franchise  `json:"franchise"`
 	ShortName       string     `json:"shortName"`
 	OfficialSiteURL string     `json:"officialSiteUrl"`
-	FranchiseID     int8       `json:"franchiseId"`
+	FranchiseID     uint8      `json:"franchiseId"`
 	Active          bool       `json:"active"`
 }
 
 type nhlTeams struct {
 	Copyright string `json:"copyright"`
 	Teams     []team `json:"teams"`
-}
-
-type teamInfo struct {
-	ID             int8
-	TeamName       string
-	LocationName   string
-	Abbreviation   string
-	DivisionName   string
-	ConferenceName string
 }

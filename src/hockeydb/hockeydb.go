@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // NumTeams is the number of teams, Seattle not in league yet
@@ -26,17 +27,12 @@ func CreateDb(db *sql.DB) {
 // CreateTables creates the tables inside the database
 func CreateTables(hdb *sql.DB) {
 	fmt.Println("Creating tables...")
-	// Switch to the Hockey database
-	_, err := hdb.Exec("USE Hockey")
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	/*
 		CREATE TABLE Teams (
 			ID int NOT NULL,
 			TeamName VARCHAR(255) NOT NULL,
-			LocationName VARCHAR(255) NOT NULL,
+			FullName VARCHAR(255) NOT NULL,
 			Abbreviation VARCHAR(255) NOT NULL,
 			DivisionName VARCHAR(255) NOT NULL,
 			ConferenceName VARCHAR(255) NOT NULL,
@@ -44,7 +40,7 @@ func CreateTables(hdb *sql.DB) {
 		)
 	*/
 	// executes the create statement to make Teams table
-	_, err = hdb.Exec("CREATE TABLE Teams (ID INT NOT NULL, TeamName VARCHAR(255) NOT NULL, LocationName VARCHAR(255) NOT NULL, Abbreviation VARCHAR(255) NOT NULL, DivisionName VARCHAR(255) NOT NULL, ConferenceName VARCHAR(255) NOT NULL, PRIMARY KEY (ID))")
+	_, err := hdb.Exec("CREATE TABLE Teams (ID INT NOT NULL, TeamName VARCHAR(255) NOT NULL, FullName VARCHAR(255) NOT NULL, Abbreviation VARCHAR(255) NOT NULL, DivisionName VARCHAR(255) NOT NULL, ConferenceName VARCHAR(255) NOT NULL, PRIMARY KEY (ID));")
 	if err != nil {
 		// I've read that checking the output of the .Error() function is bad practice, but it works
 		if err.Error() != "Error 1050: Table 'Teams' already exists" {
@@ -64,7 +60,7 @@ func CreateTables(hdb *sql.DB) {
 			PRIMARY KEY (GameKey)
 		)
 	*/
-	_, err = hdb.Exec("CREATE TABLE Schedule (GameKey INT NOT NULL AUTO_INCREMENT, GameID CHAR(10) NOT NULL, Away CHAR(3) NOT NULL, Home CHAR(3) NOT NULL, PRIMARY KEY (GameKey))")
+	_, err = hdb.Exec("CREATE TABLE Schedule (GameKey INT NOT NULL AUTO_INCREMENT, GameID CHAR(10) NOT NULL, Away CHAR(3) NOT NULL, Home CHAR(3) NOT NULL, PRIMARY KEY (GameKey));")
 	if err != nil {
 		if err.Error() != "Error 1050: Table 'Schedule' already exists" {
 			log.Fatal(err)
@@ -76,20 +72,13 @@ func CreateTables(hdb *sql.DB) {
 }
 
 // populateTeamsTable populates the Teams database
-func populateTeamsTable(hdb *sql.DB, teams [31]teamInfo) {
+func populateTeamsTable(hdb *sql.DB, allTeamInfo *nhlTeams) {
 	fmt.Println("Populating Teams table...")
 
 	for i := uint8(0); i < NumTeams; i++ {
-		sqlStr := fmt.Sprintf("INSERT INTO Teams VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", teams[i].ID, teams[i].TeamName, teams[i].LocationName, teams[i].Abbreviation, teams[i].DivisionName, teams[i].ConferenceName)
+		sqlStr := fmt.Sprintf("INSERT INTO Teams VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", allTeamInfo.Teams[i].ID, allTeamInfo.Teams[i].TeamName, allTeamInfo.Teams[i].Name, allTeamInfo.Teams[i].Abbreviation, allTeamInfo.Teams[i].Division.Name, allTeamInfo.Teams[i].Conference.Name)
 
-		fmt.Println(sqlStr)
-
-		// Switch to the Hockey database
-		_, err := hdb.Exec("USE Hockey")
-		if err != nil {
-			log.Fatal(err)
-		}
-		_, err = hdb.Query(sqlStr)
+		_, err := hdb.Exec(sqlStr)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -121,24 +110,57 @@ func GetTeams(hdb *sql.DB) {
 	// gets the json info from teamData ([]bytes) to allTeamInfo (nhlTeams struct)
 	json.Unmarshal(teamData, &allTeamInfo)
 
-	// NumTeams length teamInfo struct that contains only the needed info
-	var teams [NumTeams]teamInfo
-	// assigns the info from allTeamInfo to teams
-	for i := uint8(0); i < NumTeams; i++ {
-		teams[i] = teamInfo{allTeamInfo.Teams[i].ID, allTeamInfo.Teams[i].TeamName, allTeamInfo.Teams[i].LocationName, allTeamInfo.Teams[i].Abbreviation, allTeamInfo.Teams[i].Division.Name, allTeamInfo.Teams[i].Conference.Name}
-	}
-
-	populateTeamsTable(hdb, teams)
+	populateTeamsTable(hdb, &allTeamInfo)
 }
 
-func populateScheduleTable(hdb *sql.DB, fullSchedule schedule) {
+func populateScheduleTable(hdb *sql.DB, fullSchedule *schedule) {
 	fmt.Println("Populating Schedule table...")
+
+	numDates := len(fullSchedule.Dates)
+	for i := 0; i < numDates; i++ {
+		numGames := len(fullSchedule.Dates[i].Games)
+		fmt.Printf("Populating games from %s\n", fullSchedule.Dates[i].Date)
+		for j := 0; j < numGames; j++ {
+			if fullSchedule.Dates[i].Games[j].GameType != "PR" {
+				var teamAbreviations [2]string
+
+				awayAbbrev, err := hdb.Query("SELECT Abbreviation FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Away.Team.Name)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				awayAbbrev.Next()
+				if err = awayAbbrev.Scan(&teamAbreviations[0]); err != nil {
+					log.Fatal(err)
+				}
+				homeAbbrev, err := hdb.Query("SELECT Abbreviation FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Home.Team.Name)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				homeAbbrev.Next()
+				if err = homeAbbrev.Scan(&teamAbreviations[1]); err != nil {
+					log.Fatal(err)
+				}
+
+				sqlStr := fmt.Sprintf("INSERT INTO Schedule (GameID, Away, Home) VALUES (\"%s\", \"%s\", \"%s\")", strconv.FormatUint(uint64(fullSchedule.Dates[i].Games[j].GamePK), 10), teamAbreviations[0], teamAbreviations[1])
+
+				_, err = hdb.Exec(sqlStr)
+				if err != nil {
+					log.Fatal(err)
+				}
+				awayAbbrev.Close()
+				homeAbbrev.Close()
+			}
+		}
+	}
 
 	fmt.Println("Finished populating Schedule table.")
 }
 
 // GetSchedule retrieves the full schedule and puts the info in the Schedule table
 func GetSchedule(hdb *sql.DB) {
+	// url for the schedule json
 	url := "https://statsapi.web.nhl.com/api/v1/schedule?season=20192020"
 	fmt.Println("Getting NHL schedule...")
 	resp, err := http.Get(url)
@@ -146,13 +168,17 @@ func GetSchedule(hdb *sql.DB) {
 		log.Fatal(err)
 	}
 	fmt.Println("Retrieved schedule json.")
+	// read in the json
 	scheduleData, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// variable to hold the json info
 	var fullSchedule schedule
+	// put the json info into the variable
 	json.Unmarshal(scheduleData, &fullSchedule)
-	populateScheduleTable(hdb, fullSchedule)
+
+	populateScheduleTable(hdb, &fullSchedule)
 }

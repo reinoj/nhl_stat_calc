@@ -9,21 +9,21 @@ type state struct {
 }
 
 type leagueRecord struct {
-	Wins   int8   `json:"wins"`
-	Losses int8   `json:"losses"`
-	OT     int8   `json:"ot"`
+	Wins   uint8  `json:"wins"`
+	Losses uint8  `json:"losses"`
+	OT     uint8  `json:"ot"`
 	Type   string `json:"type"`
 }
 
 type teamDescription struct {
-	ID   int8   `json:"id"`
+	ID   uint8  `json:"id"`
 	Name string `json:"name"`
 	Link string `json:"link"`
 }
 
 type aHTeam struct {
 	Record leagueRecord    `json:"leagueRecord"`
-	Score  int8            `json:"score"`
+	Score  uint8           `json:"score"`
 	Team   teamDescription `json:"team"`
 }
 
@@ -33,7 +33,7 @@ type awayHome struct {
 }
 
 type venueInfo struct {
-	ID   int16  `json:"id"`
+	ID   uint16 `json:"id"`
 	Name string `json:"name"`
 	Link string `json:"link"`
 }
@@ -43,7 +43,7 @@ type gameContent struct {
 }
 
 type game struct {
-	GamePK   string      `json:"gamePk"`
+	GamePK   uint32      `json:"gamePk"`
 	Link     string      `json:"link"`
 	GameType string      `json:"gameType"`
 	Season   string      `json:"season"`
@@ -56,10 +56,10 @@ type game struct {
 
 type date struct {
 	Date         string   `json:"date"`
-	TotalItems   int8     `json:"totalItems"`
-	TotalEvents  int8     `json:"totalEvents"`
-	TotalGames   int8     `json:"totalGames"`
-	TotalMatches int8     `json:"totalMatches"`
+	TotalItems   uint8    `json:"totalItems"`
+	TotalEvents  uint8    `json:"totalEvents"`
+	TotalGames   uint8    `json:"totalGames"`
+	TotalMatches uint8    `json:"totalMatches"`
 	Games        []game   `json:"games"`
 	Events       []string `json:"events"`
 	Matches      []string `json:"matches"`
@@ -67,10 +67,10 @@ type date struct {
 
 type schedule struct {
 	Copyright    string `json:"copyright"`
-	TotalItems   int16  `json:"totalItems"`
-	TotalEvents  int8   `json:"totalEvents"`
-	TotalGames   int16  `json:"totalGames"`
-	TotalMatches int8   `json:"totalMatches"`
+	TotalItems   uint16 `json:"totalItems"`
+	TotalEvents  uint8  `json:"totalEvents"`
+	TotalGames   uint16 `json:"totalGames"`
+	TotalMatches uint8  `json:"totalMatches"`
 	Wait         int8   `json:"wait"`
 	Dates        []date `json:"dates"`
 }
