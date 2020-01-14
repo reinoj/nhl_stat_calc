@@ -33,14 +33,14 @@ func CreateTables(hdb *sql.DB) {
 			ID int NOT NULL,
 			TeamName VARCHAR(255) NOT NULL,
 			FullName VARCHAR(255) NOT NULL,
-			Abbreviation VARCHAR(255) NOT NULL,
+			Abbreviation CHAR(3) NOT NULL,
 			DivisionName VARCHAR(255) NOT NULL,
 			ConferenceName VARCHAR(255) NOT NULL,
 			PRIMARY KEY (ID)
 		)
 	*/
 	// executes the create statement to make Teams table
-	_, err := hdb.Exec("CREATE TABLE Teams (ID INT NOT NULL, TeamName VARCHAR(255) NOT NULL, FullName VARCHAR(255) NOT NULL, Abbreviation VARCHAR(255) NOT NULL, DivisionName VARCHAR(255) NOT NULL, ConferenceName VARCHAR(255) NOT NULL, PRIMARY KEY (ID));")
+	_, err := hdb.Exec("CREATE TABLE Teams (ID INT NOT NULL, TeamName VARCHAR(255) NOT NULL, FullName VARCHAR(255) NOT NULL, Abbreviation CHAR(3) NOT NULL, DivisionName VARCHAR(255) NOT NULL, ConferenceName VARCHAR(255) NOT NULL, PRIMARY KEY (ID));")
 	if err != nil {
 		// I've read that checking the output of the .Error() function is bad practice, but it works
 		if err.Error() != "Error 1050: Table 'Teams' already exists" {
@@ -53,14 +53,14 @@ func CreateTables(hdb *sql.DB) {
 
 	/*
 		CREATE TABLE Schedule (
-			GameKey INT NOT NULL AUTO_INCREMENT,
+			GameNum INT NOT NULL,
 			GameID CHAR(10) NOT NULL,
 			Away CHAR(3) NOT NULL,
 			Home CHAR(3) NOT NULL,
 			PRIMARY KEY (GameKey)
 		)
 	*/
-	_, err = hdb.Exec("CREATE TABLE Schedule (GameKey INT NOT NULL AUTO_INCREMENT, GameID CHAR(10) NOT NULL, Away CHAR(3) NOT NULL, Home CHAR(3) NOT NULL, PRIMARY KEY (GameKey));")
+	_, err = hdb.Exec("CREATE TABLE Schedule (GameNum INT NOT NULL, GameID CHAR(10) NOT NULL, Away CHAR(3) NOT NULL, Home CHAR(3) NOT NULL, PRIMARY KEY (GameNum));")
 	if err != nil {
 		if err.Error() != "Error 1050: Table 'Schedule' already exists" {
 			log.Fatal(err)
@@ -76,7 +76,13 @@ func populateTeamsTable(hdb *sql.DB, allTeamInfo *nhlTeams) {
 	fmt.Println("Populating Teams table...")
 
 	for i := uint8(0); i < NumTeams; i++ {
-		sqlStr := fmt.Sprintf("INSERT INTO Teams VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")", allTeamInfo.Teams[i].ID, allTeamInfo.Teams[i].TeamName, allTeamInfo.Teams[i].Name, allTeamInfo.Teams[i].Abbreviation, allTeamInfo.Teams[i].Division.Name, allTeamInfo.Teams[i].Conference.Name)
+		sqlStr := fmt.Sprintf("INSERT INTO Teams VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")",
+			allTeamInfo.Teams[i].ID,
+			allTeamInfo.Teams[i].TeamName,
+			allTeamInfo.Teams[i].Name,
+			allTeamInfo.Teams[i].Abbreviation,
+			allTeamInfo.Teams[i].Division.Name,
+			allTeamInfo.Teams[i].Conference.Name)
 
 		_, err := hdb.Exec(sqlStr)
 		if err != nil {
@@ -121,7 +127,7 @@ func populateScheduleTable(hdb *sql.DB, fullSchedule *schedule) {
 		numGames := len(fullSchedule.Dates[i].Games)
 		fmt.Printf("Populating games from %s\n", fullSchedule.Dates[i].Date)
 		for j := 0; j < numGames; j++ {
-			if fullSchedule.Dates[i].Games[j].GameType != "PR" {
+			if fullSchedule.Dates[i].Games[j].GameType == "R" {
 				var teamAbreviations [2]string
 
 				awayAbbrev, err := hdb.Query("SELECT Abbreviation FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Away.Team.Name)
@@ -143,7 +149,11 @@ func populateScheduleTable(hdb *sql.DB, fullSchedule *schedule) {
 					log.Fatal(err)
 				}
 
-				sqlStr := fmt.Sprintf("INSERT INTO Schedule (GameID, Away, Home) VALUES (\"%s\", \"%s\", \"%s\")", strconv.FormatUint(uint64(fullSchedule.Dates[i].Games[j].GamePK), 10), teamAbreviations[0], teamAbreviations[1])
+				sqlStr := fmt.Sprintf("INSERT INTO Schedule VALUES (%d, \"%s\", \"%s\", \"%s\")",
+					fullSchedule.Dates[i].Games[j].GamePK-2019020000,
+					strconv.FormatUint(uint64(fullSchedule.Dates[i].Games[j].GamePK), 10),
+					teamAbreviations[0],
+					teamAbreviations[1])
 
 				_, err = hdb.Exec(sqlStr)
 				if err != nil {

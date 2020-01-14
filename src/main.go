@@ -7,7 +7,7 @@ import (
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/reinoj/corsi_calc/src/hockeydb"
+	"github.com/reinoj/nhl_stat_calc/src/hockeydb"
 )
 
 func main() {
@@ -46,15 +46,17 @@ func main() {
 
 		db.Close()
 		//---------------CREATE INITIAL DATABASE---------------
+	}
 
+	fmt.Println("Opening Hockey database...")
+	hdb, err := sql.Open("mysql", mysqlSignIn+"@tcp(127.0.0.1:3306)/Hockey")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer hdb.Close()
+	fmt.Println("Hockey database Opened.")
+	if initialSetupFlag {
 		//---------------CREATE TABLES---------------
-		fmt.Println("Opening Hockey database...")
-		hdb, err := sql.Open("mysql", mysqlSignIn+"@tcp(127.0.0.1:3306)/Hockey")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer hdb.Close()
-		fmt.Println("Hockey database Opened.")
 
 		// Creates the tables for the database
 		hockeydb.CreateTables(hdb)
