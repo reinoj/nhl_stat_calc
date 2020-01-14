@@ -55,12 +55,14 @@ func CreateTables(hdb *sql.DB) {
 		CREATE TABLE Schedule (
 			GameNum INT NOT NULL,
 			GameID CHAR(10) NOT NULL,
-			Away CHAR(3) NOT NULL,
-			Home CHAR(3) NOT NULL,
-			PRIMARY KEY (GameKey)
+			Away INT NOT NULL,
+			AwayResult VARCHAR(3),
+			Home INT NOT NULL,
+			HomeResult VARCHAR(3),
+			PRIMARY KEY (GameNum)
 		)
 	*/
-	_, err = hdb.Exec("CREATE TABLE Schedule (GameNum INT NOT NULL, GameID CHAR(10) NOT NULL, Away CHAR(3) NOT NULL, Home CHAR(3) NOT NULL, PRIMARY KEY (GameNum));")
+	_, err = hdb.Exec("CREATE TABLE Schedule (GameNum INT NOT NULL, GameID CHAR(10) NOT NULL, Away INT NOT NULL, AwayResult VARCHAR(3), Home INT NOT NULL, HomeResult VARCHAR(3), PRIMARY KEY (GameNum));")
 	if err != nil {
 		if err.Error() != "Error 1050: Table 'Schedule' already exists" {
 			log.Fatal(err)
@@ -128,32 +130,32 @@ func populateScheduleTable(hdb *sql.DB, fullSchedule *schedule) {
 		fmt.Printf("Populating games from %s\n", fullSchedule.Dates[i].Date)
 		for j := 0; j < numGames; j++ {
 			if fullSchedule.Dates[i].Games[j].GameType == "R" {
-				var teamAbreviations [2]string
+				var teamIDs [2]uint8
 
-				awayAbbrev, err := hdb.Query("SELECT Abbreviation FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Away.Team.Name)
+				awayAbbrev, err := hdb.Query("SELECT ID FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Away.Team.Name)
 				if err != nil {
 					log.Fatal(err)
 				}
 
 				awayAbbrev.Next()
-				if err = awayAbbrev.Scan(&teamAbreviations[0]); err != nil {
+				if err = awayAbbrev.Scan(&teamIDs[0]); err != nil {
 					log.Fatal(err)
 				}
-				homeAbbrev, err := hdb.Query("SELECT Abbreviation FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Home.Team.Name)
+				homeAbbrev, err := hdb.Query("SELECT ID FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Home.Team.Name)
 				if err != nil {
 					log.Fatal(err)
 				}
 
 				homeAbbrev.Next()
-				if err = homeAbbrev.Scan(&teamAbreviations[1]); err != nil {
+				if err = homeAbbrev.Scan(&teamIDs[1]); err != nil {
 					log.Fatal(err)
 				}
 
-				sqlStr := fmt.Sprintf("INSERT INTO Schedule VALUES (%d, \"%s\", \"%s\", \"%s\")",
+				sqlStr := fmt.Sprintf("INSERT INTO Schedule (GameNum, GameID, Away, Home) VALUES (%d, \"%s\", %d, %d)",
 					fullSchedule.Dates[i].Games[j].GamePK-2019020000,
 					strconv.FormatUint(uint64(fullSchedule.Dates[i].Games[j].GamePK), 10),
-					teamAbreviations[0],
-					teamAbreviations[1])
+					teamIDs[0],
+					teamIDs[1])
 
 				_, err = hdb.Exec(sqlStr)
 				if err != nil {
