@@ -74,7 +74,7 @@ func CreateTables(hdb *sql.DB) {
 }
 
 // populateTeamsTable populates the Teams database
-func populateTeamsTable(hdb *sql.DB, allTeamInfo *nhlTeams) {
+func populateTeamsTable(hdb *sql.DB, allTeamInfo *currentTeams) {
 	fmt.Println("Populating Teams table...")
 
 	for i := uint8(0); i < NumTeams; i++ {
@@ -114,14 +114,38 @@ func GetTeams(hdb *sql.DB) {
 	}
 
 	// struct in the format of the json from nhl teams page
-	var allTeamInfo nhlTeams
+	var allTeamInfo currentTeams
 	// gets the json info from teamData ([]bytes) to allTeamInfo (nhlTeams struct)
 	json.Unmarshal(teamData, &allTeamInfo)
 
 	populateTeamsTable(hdb, &allTeamInfo)
 }
 
-func populateScheduleTable(hdb *sql.DB, fullSchedule *schedule) {
+// GetSchedule retrieves the full schedule and returns the schedule json in a schedule struct
+func GetSchedule(hdb *sql.DB) Schedule {
+	// url for the schedule json
+	url := "https://statsapi.web.nhl.com/api/v1/schedule?season=20192020"
+	fmt.Println("Getting NHL schedule...")
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Retrieved schedule json.")
+	// read in the json
+	scheduleData, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// variable to hold the json info
+	var fullSchedule Schedule
+	// put the json info into the variable
+	json.Unmarshal(scheduleData, &fullSchedule)
+	return fullSchedule
+}
+
+// PopulateScheduleTable takes the schedule and inserts info from it to the Schedule table
+func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 	fmt.Println("Populating Schedule table...")
 
 	numDates := len(fullSchedule.Dates)
@@ -170,27 +194,9 @@ func populateScheduleTable(hdb *sql.DB, fullSchedule *schedule) {
 	fmt.Println("Finished populating Schedule table.")
 }
 
-// GetSchedule retrieves the full schedule and puts the info in the Schedule table
-func GetSchedule(hdb *sql.DB) {
-	// url for the schedule json
-	url := "https://statsapi.web.nhl.com/api/v1/schedule?season=20192020"
-	fmt.Println("Getting NHL schedule...")
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Retrieved schedule json.")
-	// read in the json
-	scheduleData, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
+// UpdateScheduleResults updates the results in the Schedule table
+func UpdateScheduleResults(hdb *sql.DB) {
+	fmt.Println("Updating Schedule table with results...")
 
-	// variable to hold the json info
-	var fullSchedule schedule
-	// put the json info into the variable
-	json.Unmarshal(scheduleData, &fullSchedule)
-
-	populateScheduleTable(hdb, &fullSchedule)
+	fmt.Println("Finished updating Schedule table.")
 }

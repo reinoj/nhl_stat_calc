@@ -16,14 +16,17 @@ func main() {
 	//---------------FLAGS---------------
 	// boolean flag for whether to create the database and tables
 	var initialSetupFlag bool
+	// boolean flag for whether to update the Schedule table
+	var updateScheduleFlag bool
 	// string flag for the mysql user name
 	var mysqlUserFlag string
 	// string flag for the mysql password
 	var mysqlPasswordFlag string
 
 	flag.BoolVar(&initialSetupFlag, "initialSetup", false, "create the database and base tables.")
-	flag.StringVar(&mysqlUserFlag, "mysqlUser", "root", "user name for mysql")
-	flag.StringVar(&mysqlPasswordFlag, "mysqlPassword", "root", "mysql for mysql user")
+	flag.BoolVar(&updateScheduleFlag, "updateSchedule", false, "update results in schedule table.")
+	flag.StringVar(&mysqlUserFlag, "mysqlUser", "root", "user name for mysql.")
+	flag.StringVar(&mysqlPasswordFlag, "mysqlPassword", "root", "password for mysql user.")
 
 	// must be called after all flags are defined and before flags are accessed by the program
 	flag.Parse()
@@ -55,15 +58,19 @@ func main() {
 	}
 	defer hdb.Close()
 	fmt.Println("Hockey database Opened.")
+	var scheduleData hockeydb.Schedule
+	if initialSetupFlag || updateScheduleFlag {
+		scheduleData = hockeydb.GetSchedule(hdb)
+	}
+
 	if initialSetupFlag {
 		//---------------CREATE TABLES---------------
-
 		// Creates the tables for the database
 		hockeydb.CreateTables(hdb)
 		// Populate the Teams table
 		hockeydb.GetTeams(hdb)
 		// Populate the Schedule table
-		hockeydb.GetSchedule(hdb)
+		hockeydb.PopulateScheduleTable(hdb, &scheduleData)
 		//---------------CREATE TABLES---------------
 	}
 
