@@ -65,7 +65,8 @@ type date struct {
 	Matches      []string `json:"matches"`
 }
 
-type schedule struct {
+// Schedule is used for holding the json from NHL schedule statsapi
+type Schedule struct {
 	Copyright    string `json:"copyright"`
 	TotalItems   uint16 `json:"totalItems"`
 	TotalEvents  uint8  `json:"totalEvents"`
