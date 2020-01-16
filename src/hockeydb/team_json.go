@@ -51,7 +51,8 @@ type team struct {
 	Active          bool       `json:"active"`
 }
 
-type nhlTeams struct {
+// currentTeams stores the teams json from the NHL statsapi
+type currentTeams struct {
 	Copyright string `json:"copyright"`
 	Teams     []team `json:"teams"`
 }
