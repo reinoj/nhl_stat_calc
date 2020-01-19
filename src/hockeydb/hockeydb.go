@@ -150,9 +150,9 @@ func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 
 	numDates := len(fullSchedule.Dates)
 	for i := 0; i < numDates; i++ {
-		numGames := len(fullSchedule.Dates[i].Games)
+		numGames := fullSchedule.Dates[i].TotalGames
 		fmt.Printf("Populating games from %s\n", fullSchedule.Dates[i].Date)
-		for j := 0; j < numGames; j++ {
+		for j := uint8(0); j < numGames; j++ {
 			if fullSchedule.Dates[i].Games[j].GameType == "R" {
 				var teamIDs [2]uint8
 
@@ -194,9 +194,30 @@ func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 	fmt.Println("Finished populating Schedule table.")
 }
 
+func getLinescore(hdb *sql.DB, gameNum string, gameLinescore *linescore) {
+	url := "http://statsapi.web.nhl.com/api/v1/game/" + gameNum + "/linescore"
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	byteLinescore, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.Unmarshal(byteLinescore, gameLinescore)
+}
+
 // UpdateScheduleResults updates the results in the Schedule table
 func UpdateScheduleResults(hdb *sql.DB) {
 	fmt.Println("Updating Schedule table with results...")
+	var gameLinescore linescore
+	for gameNum := uint64(2019020001); gameNum <= 2019021271; gameNum++ {
+		getLinescore(hdb, strconv.FormatUint(gameNum, 10), &gameLinescore)
 
+		if gameLinescore.CurrentPeriodTimeRemaining != "Final" {
+			break
+		}
+	}
 	fmt.Println("Finished updating Schedule table.")
 }

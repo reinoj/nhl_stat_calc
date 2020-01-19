@@ -74,6 +74,12 @@ func main() {
 		//---------------CREATE TABLES---------------
 	}
 
+	if updateScheduleFlag {
+		//---------------UPDATE RESULTS---------------
+		hockeydb.UpdateScheduleResults(hdb)
+		//---------------UPDATE RESULTS---------------
+	}
+
 	fmt.Println("Hockey database closed.")
 	fmt.Println("Complete.")
 }
