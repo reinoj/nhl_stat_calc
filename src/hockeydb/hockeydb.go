@@ -232,12 +232,13 @@ func UpdateScheduleResults(hdb *sql.DB) {
 	if err = start.Scan(&gameNum); err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Printf("Starting Schedule update at GameNum %d.\n", gameNum.Int64)
 	if gameNum.Valid {
-		var gameLinescore linescore
 		for ; gameNum.Int64 <= 1271; gameNum.Int64++ {
+			var gameLinescore linescore
 			getLinescore(hdb, strconv.FormatUint(2019020000+uint64(gameNum.Int64), 10), &gameLinescore)
 
+			fmt.Println(gameLinescore.CurrentPeriodTimeRemaining)
 			if gameLinescore.CurrentPeriodTimeRemaining != "Final" {
 				break
 			}
