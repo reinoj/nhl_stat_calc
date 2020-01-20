@@ -30,7 +30,7 @@ func main() {
 
 	// must be called after all flags are defined and before flags are accessed by the program
 	flag.Parse()
-	//---------------FLAGS---------------
+	//---------------------------------------------
 
 	// Assigns the user name and password to the beginning of the string
 	mysqlSignIn := fmt.Sprintf("%s:%s", mysqlUserFlag, mysqlPasswordFlag)
@@ -48,7 +48,7 @@ func main() {
 		hockeydb.CreateDb(db)
 
 		db.Close()
-		//---------------CREATE INITIAL DATABASE---------------
+		//---------------------------------------------
 	}
 
 	fmt.Println("Opening Hockey database...")
@@ -69,13 +69,13 @@ func main() {
 		hockeydb.GetSchedule(hdb, &fullSchedule)
 		// Populate the Schedule table
 		hockeydb.PopulateScheduleTable(hdb, &fullSchedule)
-		//---------------CREATE TABLES---------------
+		//---------------------------------------------
 	}
 
 	if updateScheduleFlag {
 		//---------------UPDATE RESULTS---------------
 		hockeydb.UpdateScheduleResults(hdb)
-		//---------------UPDATE RESULTS---------------
+		//---------------------------------------------
 	}
 
 	fmt.Println("Hockey database closed.")

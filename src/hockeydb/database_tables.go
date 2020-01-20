@@ -6,9 +6,6 @@ import (
 	"log"
 )
 
-// NumTeams is the number of teams, Seattle not in league yet
-const NumTeams uint8 = 31
-
 // CreateDb creates the hockey database
 func CreateDb(db *sql.DB) {
 	fmt.Println("Creating Hockey databse...")
