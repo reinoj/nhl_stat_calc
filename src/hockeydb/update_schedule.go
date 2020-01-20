@@ -75,9 +75,7 @@ func UpdateScheduleResults(hdb *sql.DB) {
 				SET AwayResult = \"%s\", HomeResult = \"%s\"
 				WHERE GameNum = %d
 			*/
-			updateString := fmt.Sprintf("UPDATE Schedule SET AwayResult = \"%s\", HomeResult = \"%s\" WHERE GameNum = %d", resultPrefix+awayResult, resultPrefix+homeResult, gameNum.Int64)
-			fmt.Println(updateString)
-			_, err := hdb.Exec(updateString)
+			_, err := hdb.Exec("UPDATE Schedule SET AwayResult = \"?\", HomeResult = \"?\" WHERE GameNum = ?", resultPrefix+awayResult, resultPrefix+homeResult, gameNum.Int64)
 			if err != nil {
 				log.Fatal(err)
 			}

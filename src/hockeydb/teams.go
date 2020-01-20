@@ -43,15 +43,13 @@ func populateTeamsTable(hdb *sql.DB, allTeamInfo *currentTeams) {
 	fmt.Println("Populating Teams table...")
 
 	for i := uint8(0); i < NumTeams; i++ {
-		sqlStr := fmt.Sprintf("INSERT INTO Teams VALUES (%d, \"%s\", \"%s\", \"%s\", \"%s\", \"%s\")",
+		_, err := hdb.Exec("INSERT INTO Teams VALUES (?, \"?\", \"?\", \"?\", \"?\", \"?\")",
 			allTeamInfo.Teams[i].ID,
 			allTeamInfo.Teams[i].TeamName,
 			allTeamInfo.Teams[i].Name,
 			allTeamInfo.Teams[i].Abbreviation,
 			allTeamInfo.Teams[i].Division.Name,
 			allTeamInfo.Teams[i].Conference.Name)
-
-		_, err := hdb.Exec(sqlStr)
 		if err != nil {
 			log.Fatal(err)
 		}

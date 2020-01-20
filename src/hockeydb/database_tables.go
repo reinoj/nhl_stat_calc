@@ -63,5 +63,18 @@ func CreateTables(hdb *sql.DB) {
 			fmt.Println("Schedule table already exists.")
 		}
 	}
+
+	/*
+		CREATE TABLE ShotInfo (
+			GameNum INT NOT NULL,
+			AwayShots INT,
+			AwayBlocked INT,
+			AwayMissed INT,
+			HomeShots INT,
+			HomeBlocked INT,
+			HomeMissed INT,
+			PRIMARY KEY (GameNum)
+		)
+	*/
 	fmt.Println("Tables created.")
 }

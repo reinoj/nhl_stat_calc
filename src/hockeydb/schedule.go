@@ -64,15 +64,12 @@ func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 					log.Fatal(err)
 				}
 
-				// insert commmand to add the game into the table
-				sqlStr := fmt.Sprintf("INSERT INTO Schedule (GameNum, GameID, Away, Home) VALUES (%d, \"%s\", %d, %d)",
+				// execute insert command
+				_, err = hdb.Exec("INSERT INTO Schedule (GameNum, GameID, Away, Home) VALUES (?, \"?\", ?, ?)",
 					fullSchedule.Dates[i].Games[j].GamePK-2019020000,
 					strconv.FormatUint(uint64(fullSchedule.Dates[i].Games[j].GamePK), 10),
 					teamIDs[0],
 					teamIDs[1])
-
-				// execute insert command
-				_, err = hdb.Exec(sqlStr)
 				if err != nil {
 					log.Fatal(err)
 				}
