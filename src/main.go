@@ -58,10 +58,6 @@ func main() {
 	}
 	defer hdb.Close()
 	fmt.Println("Hockey database Opened.")
-	var scheduleData hockeydb.Schedule
-	if initialSetupFlag || updateScheduleFlag {
-		scheduleData = hockeydb.GetSchedule(hdb)
-	}
 
 	if initialSetupFlag {
 		//---------------CREATE TABLES---------------
@@ -69,8 +65,10 @@ func main() {
 		hockeydb.CreateTables(hdb)
 		// Populate the Teams table
 		hockeydb.GetTeams(hdb)
+		var fullSchedule hockeydb.Schedule
+		hockeydb.GetSchedule(hdb, &fullSchedule)
 		// Populate the Schedule table
-		hockeydb.PopulateScheduleTable(hdb, &scheduleData)
+		hockeydb.PopulateScheduleTable(hdb, &fullSchedule)
 		//---------------CREATE TABLES---------------
 	}
 

@@ -7,7 +7,7 @@ type linescore struct {
 	CurrentPeriodTimeRemaining string `json:"currentPeriodTimeRemaining"`
 	// Periods              []periods        `json:"periods"`
 	ShootoutInfo shootoutInfo `json:"shootoutInfo"`
-	// Teams                homeAway         `json:"teams"`
+	Teams        homeAway     `json:"teams"`
 	// PowerPlayStrength    string           `json:"powerPlayStrength"`
 	// HasShootout          bool             `json:"hasShootout"`
 	// IntermissionInfo     intermissionInfo `json:"intermissionInfo"`
@@ -40,19 +40,19 @@ type shootoutTeam struct {
 	Attempts uint8 `json:"attempts"`
 }
 
-/*type homeAway struct {
+type homeAway struct {
 	Home linescoreTeam `json:"home"`
 	Away linescoreTeam `json:"away"`
-}*/
+}
 
-/*type linescoreTeam struct {
-	TeamInfo     linescoreTeamInfo `json:"team"`
-	Goals        uint8             `json:"goals"`
-	ShotsOnGoal  uint8             `json:"shotsOnGoal"`
-	GoaliePulled bool              `json:"goaliePulled"`
-	NumSkaters   uint8             `json:"numSkaters"`
-	PowerPlay    bool              `json:"powerPlay"`
-}*/
+type linescoreTeam struct {
+	// TeamInfo     linescoreTeamInfo `json:"team"`
+	Goals uint8 `json:"goals"`
+	// ShotsOnGoal  uint8             `json:"shotsOnGoal"`
+	// GoaliePulled bool              `json:"goaliePulled"`
+	// NumSkaters   uint8             `json:"numSkaters"`
+	// PowerPlay    bool              `json:"powerPlay"`
+}
 
 /*type linescoreTeamInfo struct {
 	ID   uint8  `json:"id"`

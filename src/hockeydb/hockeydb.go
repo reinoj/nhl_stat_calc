@@ -122,7 +122,7 @@ func GetTeams(hdb *sql.DB) {
 }
 
 // GetSchedule retrieves the full schedule and returns the schedule json in a schedule struct
-func GetSchedule(hdb *sql.DB) Schedule {
+func GetSchedule(hdb *sql.DB, fullSchedule *Schedule) {
 	// url for the schedule json
 	url := "https://statsapi.web.nhl.com/api/v1/schedule?season=20192020"
 	fmt.Println("Getting NHL schedule...")
@@ -137,56 +137,58 @@ func GetSchedule(hdb *sql.DB) Schedule {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// variable to hold the json info
-	var fullSchedule Schedule
 	// put the json info into the variable
 	json.Unmarshal(scheduleData, &fullSchedule)
-	return fullSchedule
 }
 
 // PopulateScheduleTable takes the schedule and inserts info from it to the Schedule table
 func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 	fmt.Println("Populating Schedule table...")
-
+	// length of the Dates array
 	numDates := len(fullSchedule.Dates)
 	for i := 0; i < numDates; i++ {
+		// length of the TotalGames array in each Date
 		numGames := fullSchedule.Dates[i].TotalGames
 		fmt.Printf("Populating games from %s\n", fullSchedule.Dates[i].Date)
 		for j := uint8(0); j < numGames; j++ {
 			if fullSchedule.Dates[i].Games[j].GameType == "R" {
+				// holds the returned IDs from the queries
 				var teamIDs [2]uint8
-
-				awayAbbrev, err := hdb.Query("SELECT ID FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Away.Team.Name)
+				// away team id
+				awayID, err := hdb.Query("SELECT ID FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Away.Team.Name)
 				if err != nil {
 					log.Fatal(err)
 				}
-
-				awayAbbrev.Next()
-				if err = awayAbbrev.Scan(&teamIDs[0]); err != nil {
+				// Can now use Scan() to get the return of the query
+				awayID.Next()
+				if err = awayID.Scan(&teamIDs[0]); err != nil {
 					log.Fatal(err)
 				}
-				homeAbbrev, err := hdb.Query("SELECT ID FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Home.Team.Name)
+				// home team id
+				homeID, err := hdb.Query("SELECT ID FROM Teams WHERE FullName = ?;", fullSchedule.Dates[i].Games[j].Teams.Home.Team.Name)
 				if err != nil {
 					log.Fatal(err)
 				}
-
-				homeAbbrev.Next()
-				if err = homeAbbrev.Scan(&teamIDs[1]); err != nil {
+				// Can now use Scan() to get the return of the query
+				homeID.Next()
+				if err = homeID.Scan(&teamIDs[1]); err != nil {
 					log.Fatal(err)
 				}
 
+				// insert commmand to add the game into the table
 				sqlStr := fmt.Sprintf("INSERT INTO Schedule (GameNum, GameID, Away, Home) VALUES (%d, \"%s\", %d, %d)",
 					fullSchedule.Dates[i].Games[j].GamePK-2019020000,
 					strconv.FormatUint(uint64(fullSchedule.Dates[i].Games[j].GamePK), 10),
 					teamIDs[0],
 					teamIDs[1])
 
+				// execute insert command
 				_, err = hdb.Exec(sqlStr)
 				if err != nil {
 					log.Fatal(err)
 				}
-				awayAbbrev.Close()
-				homeAbbrev.Close()
+				awayID.Close()
+				homeID.Close()
 			}
 		}
 	}
@@ -195,6 +197,7 @@ func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 }
 
 func getLinescore(hdb *sql.DB, gameNum string, gameLinescore *linescore) {
+	// url to the individual games
 	url := "http://statsapi.web.nhl.com/api/v1/game/" + gameNum + "/linescore"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -205,19 +208,67 @@ func getLinescore(hdb *sql.DB, gameNum string, gameLinescore *linescore) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// unmarshal the json into the linescore pointer
 	json.Unmarshal(byteLinescore, gameLinescore)
 }
 
 // UpdateScheduleResults updates the results in the Schedule table
 func UpdateScheduleResults(hdb *sql.DB) {
 	fmt.Println("Updating Schedule table with results...")
-	var gameLinescore linescore
-	for gameNum := uint64(2019020001); gameNum <= 2019021271; gameNum++ {
-		getLinescore(hdb, strconv.FormatUint(gameNum, 10), &gameLinescore)
 
-		if gameLinescore.CurrentPeriodTimeRemaining != "Final" {
-			break
+	/*
+		SELECT MIN(GameNum)
+		FROM Schedule
+		WHERE AwayResult IS NULL
+	*/
+	// returns the GameNum of the first game without a result filled in
+	start, err := hdb.Query("SELECT MIN(GameNum) FROM Schedule WHERE AwayResult IS NULL")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer start.Close()
+	start.Next()
+	var gameNum sql.NullInt64
+	if err = start.Scan(&gameNum); err != nil {
+		log.Fatal(err)
+	}
+
+	if gameNum.Valid {
+		var gameLinescore linescore
+		for ; gameNum.Int64 <= 1271; gameNum.Int64++ {
+			getLinescore(hdb, strconv.FormatUint(2019020000+uint64(gameNum.Int64), 10), &gameLinescore)
+
+			if gameLinescore.CurrentPeriodTimeRemaining != "Final" {
+				break
+			}
+			var resultPrefix string
+			switch gameLinescore.CurrentPeriod {
+			case 4:
+				resultPrefix = "OT"
+			case 5:
+				resultPrefix = "SO"
+			}
+			var awayResult, homeResult string
+
+			if gameLinescore.Teams.Away.Goals > gameLinescore.Teams.Home.Goals {
+				awayResult, homeResult = "w", "L"
+			} else {
+				awayResult, homeResult = "L", "W"
+			}
+			/*
+				UPDATE Schedule
+				SET AwayResult = \"%s\", HomeResult = \"%s\"
+				WHERE GameNum = %d
+			*/
+			updateString := fmt.Sprintf("UPDATE Schedule SET AwayResult = \"%s\", HomeResult = \"%s\" WHERE GameNum = %d", resultPrefix+awayResult, resultPrefix+homeResult, gameNum.Int64)
+			fmt.Println(updateString)
+			_, err := hdb.Exec(updateString)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
+	} else {
+		fmt.Println("No rows to update in Schedule table.")
 	}
 	fmt.Println("Finished updating Schedule table.")
 }
