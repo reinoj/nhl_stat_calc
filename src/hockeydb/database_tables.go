@@ -14,13 +14,23 @@ func CreateDb(db *sql.DB) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Successfully created Hockey database")
+	fmt.Println("Hockey database created.")
 }
 
 // CreateTables creates the tables inside the database
 func CreateTables(hdb *sql.DB) {
 	fmt.Println("Creating tables...")
 
+	createTeamsTable(hdb)
+
+	createScheduleTable(hdb)
+
+	createShotInfoTable(hdb)
+
+	fmt.Println("Tables created.")
+}
+
+func createTeamsTable(hdb *sql.DB) {
 	/*
 		CREATE TABLE Teams (
 			ID int NOT NULL,
@@ -43,7 +53,10 @@ func CreateTables(hdb *sql.DB) {
 		}
 		// If the error is that the table already exists, just ignore it, otherwise it will print the error to the screen
 	}
+	fmt.Println("Teams table created.")
+}
 
+func createScheduleTable(hdb *sql.DB) {
 	/*
 		CREATE TABLE Schedule (
 			GameNum INT NOT NULL,
@@ -57,7 +70,7 @@ func CreateTables(hdb *sql.DB) {
 			FOREIGN KEY (Home) REFERENCES Teams(ID)
 		)
 	*/
-	_, err = hdb.Exec("CREATE TABLE Schedule (GameNum INT NOT NULL, GameID CHAR(10) NOT NULL, Away INT NOT NULL, AwayResult VARCHAR(3), Home INT NOT NULL, HomeResult VARCHAR(3), PRIMARY KEY (GameNum), FOREIGN KEY (Away) REFERENCES Teams(ID), FOREIGN KEY (Home) REFERENCES Teams(ID));")
+	_, err := hdb.Exec("CREATE TABLE Schedule (GameNum INT NOT NULL, GameID CHAR(10) NOT NULL, Away INT NOT NULL, AwayResult VARCHAR(3), Home INT NOT NULL, HomeResult VARCHAR(3), PRIMARY KEY (GameNum), FOREIGN KEY (Away) REFERENCES Teams(ID), FOREIGN KEY (Home) REFERENCES Teams(ID));")
 	if err != nil {
 		if err.Error() != "Error 1050: Table 'Schedule' already exists" {
 			log.Fatal(err)
@@ -65,21 +78,26 @@ func CreateTables(hdb *sql.DB) {
 			fmt.Println("Schedule table already exists.")
 		}
 	}
+	fmt.Println("Schedule table created.")
+}
 
+func createShotInfoTable(hdb *sql.DB) {
 	/*
 		CREATE TABLE ShotInfo (
 			GameNum INT NOT NULL,
 			AwayShots INT,
 			AwayBlocked INT,
 			AwayMissed INT,
+			AwayCorsi INT,
 			HomeShots INT,
 			HomeBlocked INT,
 			HomeMissed INT,
+			HomeCorsi INT,
 			PRIMARY KEY (GameNum),
 			FOREIGN KEY (GameNum) REFERENCES Schedule(GameNum)
 		)
 	*/
-	_, err = hdb.Exec("CREATE TABLE ShotInfo (GameNum INT NOT NULL, AwayShots INT, AwayBlocked INT, AwayMissed INT, HomeShots INT, HomeBlocked INT, HomeMissed INT, PRIMARY KEY (GameNum), FOREIGN KEY (GameNum) REFERENCES Schedule(GameNum));")
+	_, err := hdb.Exec("CREATE TABLE ShotInfo (GameNum INT NOT NULL, AwayShots INT, AwayBlocked INT, AwayMissed INT, AwayCorsi INT, HomeShots INT, HomeBlocked INT, HomeMissed INT, HomeCorsi INT, PRIMARY KEY (GameNum), FOREIGN KEY (GameNum) REFERENCES Schedule(GameNum));")
 	if err != nil {
 		if err.Error() != "Error 1050: Table 'ShotInfo' already exists" {
 			log.Fatal(err)
@@ -87,5 +105,5 @@ func CreateTables(hdb *sql.DB) {
 			fmt.Println("ShotInfo table already exists.")
 		}
 	}
-	fmt.Println("Tables created.")
+	fmt.Println("ShotInfo table created.")
 }
