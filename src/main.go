@@ -17,14 +17,14 @@ func main() {
 	// boolean flag for whether to create the database and tables
 	var initialSetupFlag bool
 	// boolean flag for whether to update the Schedule table
-	var updateScheduleFlag bool
+	var updateTablesFlag bool
 	// string flag for the mysql user name
 	var mysqlUserFlag string
 	// string flag for the mysql password
 	var mysqlPasswordFlag string
 
 	flag.BoolVar(&initialSetupFlag, "initialSetup", false, "create the database and base tables.")
-	flag.BoolVar(&updateScheduleFlag, "updateSchedule", false, "update results in schedule table.")
+	flag.BoolVar(&updateTablesFlag, "updateTables", false, "update the Schedule and ShotInfo tables.")
 	flag.StringVar(&mysqlUserFlag, "mysqlUser", "root", "user name for mysql.")
 	flag.StringVar(&mysqlPasswordFlag, "mysqlPassword", "root", "password for mysql user.")
 
@@ -72,9 +72,9 @@ func main() {
 		//---------------------------------------------
 	}
 
-	if updateScheduleFlag {
+	if updateTablesFlag {
 		//---------------UPDATE RESULTS---------------
-		hockeydb.UpdateScheduleResults(hdb)
+		hockeydb.UpdateTables(hdb)
 		//---------------------------------------------
 	}
 
