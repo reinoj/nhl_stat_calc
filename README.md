@@ -1,7 +1,7 @@
-# corsi_calc
+# nhl_stat_calc
 
 ## To-Do
-- Make new table to store shots/blocked/missed for each game
-- Use /boxscore to calculate Corsi
+- Use ShotInfo table to calculate corsi
     - Output results (times team with the better corse won/lost)
 - Multiple years, instead of just 2019-20
+- Cleanup update_tables.go, it's a mess.
