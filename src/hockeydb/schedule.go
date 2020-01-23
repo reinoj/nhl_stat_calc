@@ -30,7 +30,7 @@ func GetSchedule(hdb *sql.DB, fullSchedule *Schedule) {
 	json.Unmarshal(scheduleData, &fullSchedule)
 }
 
-// PopulateScheduleTable takes the schedule and inserts info from it to the Schedule table
+// PopulateScheduleTable takes the schedule and inserts info from it to the Schedule table and adds the GameNum to the ShotInfo table
 func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 	fmt.Println("Populating Schedule table...")
 	// length of the Dates array
@@ -48,6 +48,7 @@ func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 				if err != nil {
 					log.Fatal(err)
 				}
+
 				// Can now use Scan() to get the return of the query
 				awayID.Next()
 				if err = awayID.Scan(&teamIDs[0]); err != nil {
@@ -58,21 +59,27 @@ func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 				if err != nil {
 					log.Fatal(err)
 				}
+
 				// Can now use Scan() to get the return of the query
 				homeID.Next()
 				if err = homeID.Scan(&teamIDs[1]); err != nil {
 					log.Fatal(err)
 				}
 
-				// execute insert command
-				_, err = hdb.Exec("INSERT INTO Schedule (GameNum, GameID, Away, Home) VALUES (?, \"?\", ?, ?)",
-					fullSchedule.Dates[i].Games[j].GamePK-2019020000,
+				gameNum := fullSchedule.Dates[i].Games[j].GamePK - 2019020000
+				sqlStr := fmt.Sprintf("INSERT INTO Schedule (GameNum, GameID, Away, Home) VALUES (%d, \"%s\", %d, %d)",
+					gameNum,
 					strconv.FormatUint(uint64(fullSchedule.Dates[i].Games[j].GamePK), 10),
 					teamIDs[0],
 					teamIDs[1])
+				// execute insert command for Schedule Table
+				_, err = hdb.Exec(sqlStr)
 				if err != nil {
 					log.Fatal(err)
 				}
+
+				_, err = hdb.Exec("INSERT INTO ShotInfo (GameNum) VALUES (?)", gameNum)
+
 				awayID.Close()
 				homeID.Close()
 			}
