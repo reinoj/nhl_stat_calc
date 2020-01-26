@@ -8,6 +8,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/reinoj/nhl_stat_calc/src/hockeydb"
+	"github.com/reinoj/nhl_stat_calc/src/statcalc"
 )
 
 func main() {
@@ -18,6 +19,8 @@ func main() {
 	var initialSetupFlag bool
 	// boolean flag for whether to update the Schedule table
 	var updateTablesFlag bool
+	// boolean flag for whether to calculate corsi
+	var calculateCorsi bool
 	// string flag for the mysql user name
 	var mysqlUserFlag string
 	// string flag for the mysql password
@@ -25,6 +28,7 @@ func main() {
 
 	flag.BoolVar(&initialSetupFlag, "initialSetup", false, "create the database and base tables.")
 	flag.BoolVar(&updateTablesFlag, "updateTables", false, "update the Schedule and ShotInfo tables.")
+	flag.BoolVar(&calculateCorsi, "calculateCorsi", false, "calculate corsi from ShotInfo table.")
 	flag.StringVar(&mysqlUserFlag, "mysqlUser", "root", "user name for mysql.")
 	flag.StringVar(&mysqlPasswordFlag, "mysqlPassword", "root", "password for mysql user.")
 
@@ -76,6 +80,10 @@ func main() {
 		//---------------UPDATE RESULTS---------------
 		hockeydb.UpdateTables(hdb)
 		//---------------------------------------------
+	}
+
+	if calculateCorsi {
+		statcalc.CorsiCalc(hdb)
 	}
 
 	fmt.Println("Hockey database closed.")

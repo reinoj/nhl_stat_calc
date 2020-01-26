@@ -40,7 +40,6 @@ func UpdateTables(hdb *sql.DB) {
 			// holds the json from the feed/live page for the game
 			var gameFeedLive feedLive
 			getFeedLive(hdb, strconv.FormatUint(2019020000+uint64(gameNum.Int64), 10), &gameFeedLive)
-
 			// if the game isn't finished exit the loop
 			if gameFeedLive.LiveData.Linescore.CurrentPeriodTimeRemaining != "Final" {
 				break
