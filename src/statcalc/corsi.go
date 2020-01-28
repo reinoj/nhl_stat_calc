@@ -2,8 +2,12 @@ package statcalc
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
+	"strings"
 )
 
 // (shots + missed + blocked against) - (shots against + missed shots against + blocked)
@@ -67,22 +71,58 @@ func getGameCorsi(hdb *sql.DB, gameNum uint16, gameShotInfo *[6]sql.NullInt64) {
 
 // GetCorsiWins will output the number of games where the team with higher corsi won or loss
 func GetCorsiWins(hdb *sql.DB) {
-	for i := uint16(1); i <= 1271; i++ {
-		var awayResult sql.NullString
-		var awayCorsi sql.NullInt64
-		getResultAndCorsi(hdb, &i, &awayResult, &awayCorsi)
+	totalGames, wins := 0, 0
+	for i := 1; i <= 1271; i++ {
+		fmt.Println(i)
+		awayResult, awayCorsi := getResultAndCorsi(hdb, &i)
 		if awayResult.Valid && awayCorsi.Valid {
-			//do stuff
+			// if both are not NULL then we increment the total number of games played
+			totalGames++
+			if (strings.HasSuffix(awayResult.String, "W") && awayCorsi.Int64 > 0) ||
+				(!strings.HasSuffix(awayResult.String, "W") && awayCorsi.Int64 < 0) {
+				// if the last character in the string is a W and the corsi is positive, then increment the number of wins
+				wins++
+			}
+		} else {
+			break
 		}
 	}
+	fmt.Println(totalGames, "\t", wins)
+	// write the new results to the file
+	writeCorsiResult(totalGames, wins)
 }
 
-func getResultAndCorsi(hdb *sql.DB, gameNum *uint16, awayResult *sql.NullString, awayCorsi *sql.NullInt64) {
+/*func getCurrentCorsi() (int, int) {
+	corsiFile, err := os.Open("statcalc/corsi.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer corsiFile.Close()
+	corsiCsv := csv.NewReader(corsiFile)
+	csvArray, err := corsiCsv.ReadAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tG, err := strconv.Atoi(csvArray[1][1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	w, err := strconv.Atoi(csvArray[2][1])
+	if err != nil {
+		log.Fatal(err)
+	}
+	return tG + 1, w
+}*/
+
+func getResultAndCorsi(hdb *sql.DB, gameNum *int) (sql.NullString, sql.NullInt64) {
 	result, err := hdb.Query("SELECT AwayResult FROM Schedule WHERE GameNum=?", gameNum)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer result.Close()
+
+	var awayResult sql.NullString
 	result.Next()
 	err = result.Scan(&awayResult)
 	if err != nil {
@@ -94,9 +134,39 @@ func getResultAndCorsi(hdb *sql.DB, gameNum *uint16, awayResult *sql.NullString,
 		log.Fatal(err)
 	}
 	defer corsi.Close()
+
+	var awayCorsi sql.NullInt64
 	corsi.Next()
 	err = corsi.Scan(&awayCorsi)
 	if err != nil {
 		log.Fatal(err)
 	}
+	return awayResult, awayCorsi
+}
+
+func writeCorsiResult(totalGames, wins int) {
+	output := [][]string{
+		{"description", "numberOfGames"},
+		{"totalGames", strconv.Itoa(int(totalGames))},
+		{"wins", strconv.Itoa(int(wins))},
+	}
+	file, err := os.OpenFile("statcalc/corsi.csv", os.O_WRONLY, os.ModeAppend)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	for _, row := range output {
+		err = writer.Write(row)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func madeIt(location string) {
+	fmt.Printf("Made it %s.\n", location)
 }
