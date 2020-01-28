@@ -21,6 +21,8 @@ func main() {
 	var updateTablesFlag bool
 	// boolean flag for whether to calculate corsi
 	var calculateCorsi bool
+	// boolean flag for whether to output corsi stats
+	var outputCorsi bool
 	// string flag for the mysql user name
 	var mysqlUserFlag string
 	// string flag for the mysql password
@@ -29,6 +31,7 @@ func main() {
 	flag.BoolVar(&initialSetupFlag, "initialSetup", false, "create the database and base tables.")
 	flag.BoolVar(&updateTablesFlag, "updateTables", false, "update the Schedule and ShotInfo tables.")
 	flag.BoolVar(&calculateCorsi, "calculateCorsi", false, "calculate corsi from ShotInfo table.")
+	flag.BoolVar(&outputCorsi, "outputCorsi", false, "output corsi info for the season.")
 	flag.StringVar(&mysqlUserFlag, "mysqlUser", "root", "user name for mysql.")
 	flag.StringVar(&mysqlPasswordFlag, "mysqlPassword", "root", "password for mysql user.")
 
@@ -84,6 +87,10 @@ func main() {
 
 	if calculateCorsi {
 		statcalc.CorsiCalc(hdb)
+	}
+
+	if outputCorsi {
+		statcalc.GetCorsiWins(hdb)
 	}
 
 	fmt.Println("Hockey database closed.")
