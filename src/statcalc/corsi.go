@@ -92,29 +92,6 @@ func GetCorsiWins(hdb *sql.DB) {
 	writeCorsiResult(totalGames, wins)
 }
 
-/*func getCurrentCorsi() (int, int) {
-	corsiFile, err := os.Open("statcalc/corsi.csv")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer corsiFile.Close()
-	corsiCsv := csv.NewReader(corsiFile)
-	csvArray, err := corsiCsv.ReadAll()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tG, err := strconv.Atoi(csvArray[1][1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	w, err := strconv.Atoi(csvArray[2][1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	return tG + 1, w
-}*/
-
 func getResultAndCorsi(hdb *sql.DB, gameNum *int) (sql.NullString, sql.NullInt64) {
 	result, err := hdb.Query("SELECT AwayResult FROM Schedule WHERE GameNum=?", gameNum)
 	if err != nil {

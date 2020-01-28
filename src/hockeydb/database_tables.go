@@ -65,12 +65,14 @@ func createScheduleTable(hdb *sql.DB) {
 			AwayResult VARCHAR(3),
 			Home INT NOT NULL,
 			HomeResult VARCHAR(3),
+			OT BOOL,
+			SO BOOL,
 			PRIMARY KEY (GameNum),
 			FOREIGN KEY (Away) REFERENCES Teams(ID),
 			FOREIGN KEY (Home) REFERENCES Teams(ID)
 		)
 	*/
-	_, err := hdb.Exec("CREATE TABLE Schedule (GameNum INT NOT NULL, GameID CHAR(10) NOT NULL, Away INT NOT NULL, AwayResult VARCHAR(3), Home INT NOT NULL, HomeResult VARCHAR(3), PRIMARY KEY (GameNum), FOREIGN KEY (Away) REFERENCES Teams(ID), FOREIGN KEY (Home) REFERENCES Teams(ID));")
+	_, err := hdb.Exec("CREATE TABLE Schedule (GameNum INT NOT NULL, GameID CHAR(10) NOT NULL, Away INT NOT NULL, AwayResult VARCHAR(3), Home INT NOT NULL, HomeResult VARCHAR(3), OT BOOL, SO BOOL, PRIMARY KEY (GameNum), FOREIGN KEY (Away) REFERENCES Teams(ID), FOREIGN KEY (Home) REFERENCES Teams(ID));")
 	if err != nil {
 		if err.Error() != "Error 1050: Table 'Schedule' already exists" {
 			log.Fatal(err)

@@ -15,23 +15,26 @@ func main() {
 	fmt.Println("Starting...")
 
 	//---------------FLAGS---------------
-	// boolean flag for whether to create the database and tables
+	// boolean flag for whether to create the database
 	var initialSetupFlag bool
+	// boolean flag for whether to create the tables
+	var createTablesFlag bool
 	// boolean flag for whether to update the Schedule table
 	var updateTablesFlag bool
 	// boolean flag for whether to calculate corsi
-	var calculateCorsi bool
+	var calculateCorsiFlag bool
 	// boolean flag for whether to output corsi stats
-	var outputCorsi bool
+	var outputCorsiFlag bool
 	// string flag for the mysql user name
 	var mysqlUserFlag string
 	// string flag for the mysql password
 	var mysqlPasswordFlag string
 
-	flag.BoolVar(&initialSetupFlag, "initialSetup", false, "create the database and base tables.")
+	flag.BoolVar(&initialSetupFlag, "initialSetup", false, "create the database.")
+	flag.BoolVar(&initialSetupFlag, "createTables", false, "create the tables.")
 	flag.BoolVar(&updateTablesFlag, "updateTables", false, "update the Schedule and ShotInfo tables.")
-	flag.BoolVar(&calculateCorsi, "calculateCorsi", false, "calculate corsi from ShotInfo table.")
-	flag.BoolVar(&outputCorsi, "outputCorsi", false, "output corsi info for the season.")
+	flag.BoolVar(&calculateCorsiFlag, "calculateCorsi", false, "calculate corsi from ShotInfo table.")
+	flag.BoolVar(&outputCorsiFlag, "outputCorsi", false, "output corsi info for the season.")
 	flag.StringVar(&mysqlUserFlag, "mysqlUser", "root", "user name for mysql.")
 	flag.StringVar(&mysqlPasswordFlag, "mysqlPassword", "root", "password for mysql user.")
 
@@ -66,7 +69,7 @@ func main() {
 	defer hdb.Close()
 	fmt.Println("Hockey database Opened.")
 
-	if initialSetupFlag {
+	if createTablesFlag {
 		//---------------CREATE TABLES---------------
 		// Creates the tables for the database
 		hockeydb.CreateTables(hdb)
@@ -85,11 +88,11 @@ func main() {
 		//---------------------------------------------
 	}
 
-	if calculateCorsi {
+	if calculateCorsiFlag {
 		statcalc.CorsiCalc(hdb)
 	}
 
-	if outputCorsi {
+	if outputCorsiFlag {
 		statcalc.GetCorsiWins(hdb)
 	}
 

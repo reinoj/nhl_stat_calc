@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 // GetSchedule retrieves the full schedule and returns the schedule json in a schedule struct
@@ -67,7 +66,7 @@ func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 				}
 
 				gameNum := fullSchedule.Dates[i].Games[j].GamePK - 2019020000
-				sqlStr := fmt.Sprintf("INSERT INTO Schedule (GameNum, GameID, Away, Home) VALUES (%d, \"%s\", %d, %d)",
+				/*sqlStr := fmt.Sprintf("INSERT INTO Schedule (GameNum, GameID, Away, Home) VALUES (%d, \"%s\", %d, %d)",
 					gameNum,
 					strconv.FormatUint(uint64(fullSchedule.Dates[i].Games[j].GamePK), 10),
 					teamIDs[0],
@@ -76,7 +75,7 @@ func PopulateScheduleTable(hdb *sql.DB, fullSchedule *Schedule) {
 				_, err = hdb.Exec(sqlStr)
 				if err != nil {
 					log.Fatal(err)
-				}
+				}*/
 
 				_, err = hdb.Exec("INSERT INTO ShotInfo (GameNum) VALUES (?)", gameNum)
 

@@ -20,7 +20,8 @@ func UpdateTables(hdb *sql.DB) {
 		WHERE AwayResult IS NULL
 	*/
 	// returns the GameNum of the first game without a result filled in
-	start, err := hdb.Query("SELECT MIN(GameNum) FROM Schedule WHERE AwayResult IS NULL")
+	//start, err := hdb.Query("SELECT MIN(GameNum) FROM Schedule WHERE AwayResult IS NULL")
+	start, err := hdb.Query("SELECT MIN(GameNum) FROM ShotInfo WHERE AwayShots IS NULL")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,10 +46,14 @@ func UpdateTables(hdb *sql.DB) {
 				break
 			}
 			// ---------------SCHEDULE UPDATE---------------
+			fmt.Println("Updating Schedule table...")
 			updateSchedule(hdb, &gameFeedLive, uint16(gameNum.Int64))
+			fmt.Println("Schedule table updated.")
 
 			//---------------SHOT INFO UPDATE---------------
+			fmt.Println("Updating ShotInfo table...")
 			updateShotInfo(hdb, &gameFeedLive, uint16(gameNum.Int64))
+			fmt.Println("ShotInfo table updated.")
 		}
 	} else {
 		// if the return is NULL then there's no rows left to update
@@ -75,7 +80,6 @@ func getFeedLive(hdb *sql.DB, gameNum string, gameFeedLive *feedLive) {
 
 // UpdateShotInfo updates the ShotInfo table
 func updateShotInfo(hdb *sql.DB, gameFeedLive *feedLive, gameNum uint16) {
-	fmt.Println("Updating ShotInfo table...")
 	// count away and home missed shots
 	awayMissed, homeMissed := uint8(0), uint8(0)
 	// only need the away team id for checking
@@ -104,19 +108,15 @@ func updateShotInfo(hdb *sql.DB, gameFeedLive *feedLive, gameNum uint16) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("ShotInfo table updated.")
 }
 
 func updateSchedule(hdb *sql.DB, gameFeedLive *feedLive, gameNum uint16) {
-	fmt.Println("Updating Schedule table with results...")
-
-	// ---------------SCHEDULE UPDATE---------------
-	var resultPrefix string
+	ot, so := 0, 0
 	switch gameFeedLive.LiveData.Linescore.CurrentPeriod {
 	case 4:
-		resultPrefix = "OT"
+		ot = 1
 	case 5:
-		resultPrefix = "SO"
+		so = 1
 	}
 	var awayResult, homeResult string
 
@@ -130,12 +130,9 @@ func updateSchedule(hdb *sql.DB, gameFeedLive *feedLive, gameNum uint16) {
 		SET AwayResult = \"%s\", HomeResult = \"%s\"
 		WHERE GameNum = %d
 	*/
-	sqlStr := fmt.Sprintf("UPDATE Schedule SET AwayResult = \"%s\", HomeResult = \"%s\" WHERE GameNum = %d", resultPrefix+awayResult, resultPrefix+homeResult, gameNum)
+	sqlStr := fmt.Sprintf("UPDATE Schedule SET AwayResult = \"%s\", HomeResult = \"%s\", OT = %d, SO = %d WHERE GameNum = %d", awayResult, homeResult, ot, so, gameNum)
 	_, err := hdb.Exec(sqlStr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	//---------------------------------------------
-
-	fmt.Println("Finished updating Schedule table.")
 }
