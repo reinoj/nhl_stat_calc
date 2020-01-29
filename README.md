@@ -6,6 +6,9 @@
 
 * MySQL
 * Golang (I ran this on 1.13.5)
+* Golang MySQL driver
+  * > go get github.com/go-sql-driver/mysql
+* This repository
   * > go get github.com/reinoj/nhl_stat_calc
 
 ### Flags
