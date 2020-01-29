@@ -1,8 +1,30 @@
 # nhl_stat_calc
 
+## Running
+
+### Dependencies
+
+* MySQL
+* Golang (I ran this on 1.13.5)
+  * > go get github.com/reinoj/nhl_stat_calc
+
+### Flags
+
+* -initialSetup
+  * creating the database, only do first time running
+* -createTables
+  * creating the tables in the database
+* -updateTables
+  * updating the Schedule and ShotInfo tables
+* -calculateCorsi
+  * calculate corsi for each game and store in ShotInfo table
+* -outputCorsi
+  * output the corsi results to .json file
+* -mysqlUser
+  * username for your mysql
+* -mysqlPassword
+  * password for your mysql
+
 ## To-Do
-- ~Change Schedule Result to have 2 booleans for OT and SO and then just have result be "W" or "L"~
-    - will have to update the corsi calculation because of this change
-- output json file instead of csv
-    - wins with higher: all, exclude shootouts, exclude ot and shootouts
-- Multiple years, instead of just 2019-20
+
+* Multiple years, instead of just 2019-20
