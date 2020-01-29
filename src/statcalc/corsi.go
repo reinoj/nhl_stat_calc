@@ -2,12 +2,10 @@ package statcalc
 
 import (
 	"database/sql"
-	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"strconv"
-	"strings"
 )
 
 // (shots + missed + blocked against) - (shots against + missed shots against + blocked)
@@ -71,37 +69,49 @@ func getGameCorsi(hdb *sql.DB, gameNum uint16, gameShotInfo *[6]sql.NullInt64) {
 
 // GetCorsiWins will output the number of games where the team with higher corsi won or loss
 func GetCorsiWins(hdb *sql.DB) {
-	totalGames, wins := 0, 0
+	totalGames, totalWins, otWins, soWins := 0, 0, 0, 0
 	for i := 1; i <= 1271; i++ {
-		fmt.Println(i)
-		awayResult, awayCorsi := getResultAndCorsi(hdb, &i)
-		if awayResult.Valid && awayCorsi.Valid {
+		awayGameResult := getResultAndCorsi(hdb, &i)
+		if awayGameResult.AwayResult.Valid {
 			// if both are not NULL then we increment the total number of games played
 			totalGames++
-			if (strings.HasSuffix(awayResult.String, "W") && awayCorsi.Int64 > 0) ||
-				(!strings.HasSuffix(awayResult.String, "W") && awayCorsi.Int64 < 0) {
-				// if the last character in the string is a W and the corsi is positive, then increment the number of wins
-				wins++
+			if (awayGameResult.AwayResult.String == "W" && awayGameResult.AwayCorsi.Int64 > 0) ||
+				(awayGameResult.AwayResult.String == "L" && awayGameResult.AwayCorsi.Int64 < 0) {
+				// if the string is a W and the corsi is positive or if the string is an L and the corsi is less than 0, increment the number of wins
+				totalWins++
+
+				if awayGameResult.OT.Bool {
+					otWins++
+				} else if awayGameResult.SO.Bool {
+					soWins++
+				}
 			}
 		} else {
 			break
 		}
 	}
-	fmt.Println(totalGames, "\t", wins)
+	fmt.Println("Total games: ", totalGames)
 	// write the new results to the file
-	writeCorsiResult(totalGames, wins)
+	writeCorsiResult(totalGames, totalWins, otWins, soWins)
 }
 
-func getResultAndCorsi(hdb *sql.DB, gameNum *int) (sql.NullString, sql.NullInt64) {
-	result, err := hdb.Query("SELECT AwayResult FROM Schedule WHERE GameNum=?", gameNum)
+type result struct {
+	AwayResult sql.NullString
+	OT         sql.NullBool
+	SO         sql.NullBool
+	AwayCorsi  sql.NullInt64
+}
+
+func getResultAndCorsi(hdb *sql.DB, gameNum *int) result {
+	queryResult, err := hdb.Query("SELECT AwayResult, OT, SO FROM Schedule WHERE GameNum=?", gameNum)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer result.Close()
+	defer queryResult.Close()
 
-	var awayResult sql.NullString
-	result.Next()
-	err = result.Scan(&awayResult)
+	var gameResult result
+	queryResult.Next()
+	err = queryResult.Scan(&gameResult.AwayResult, &gameResult.OT, &gameResult.SO)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -112,38 +122,34 @@ func getResultAndCorsi(hdb *sql.DB, gameNum *int) (sql.NullString, sql.NullInt64
 	}
 	defer corsi.Close()
 
-	var awayCorsi sql.NullInt64
 	corsi.Next()
-	err = corsi.Scan(&awayCorsi)
+	err = corsi.Scan(&gameResult.AwayCorsi)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return awayResult, awayCorsi
+	return gameResult
 }
 
-func writeCorsiResult(totalGames, wins int) {
-	output := [][]string{
-		{"description", "numberOfGames"},
-		{"totalGames", strconv.Itoa(int(totalGames))},
-		{"wins", strconv.Itoa(int(wins))},
+type corsiOutput struct {
+	Description       string `json:"description"`
+	TotalGames        int    `json:"totalGames"`
+	AllCorsiWins      int    `json:"allCorsiWins"`
+	NoSOCorsiWins     int    `json:"noSOCorsiWins"`
+	NoOTOrSOCorsiWins int    `json:"noOTOrSOCorsiWins"`
+}
+
+func writeCorsiResult(totalGames, totalWins, otWins, soWins int) {
+	outputPreMarshal := corsiOutput{"numberOfGames", totalGames, totalWins, totalWins - soWins, totalWins - otWins - soWins}
+	output, err := json.Marshal(outputPreMarshal)
+	if err != nil {
+		log.Fatal(err)
 	}
-	file, err := os.OpenFile("statcalc/corsi.csv", os.O_WRONLY, os.ModeAppend)
+
+	file, err := os.OpenFile("statcalc/corsi.json", os.O_RDWR, os.ModeAppend)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	for _, row := range output {
-		err = writer.Write(row)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-}
-
-func madeIt(location string) {
-	fmt.Printf("Made it %s.\n", location)
+	_, err = file.Write(output)
 }
